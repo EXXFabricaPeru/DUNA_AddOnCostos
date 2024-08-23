@@ -1,0 +1,224 @@
+    
+    
+-- exec [dbo].[SP_CUENTA_61_COSTO_PROD_DESTINO_71] '20180801','20180831','TODOS'    
+    
+ALTER PROCEDURE [dbo].[SP_CUENTA_61_COSTO_PROD_DESTINO_71]             
+@FInicio datetime,           
+@FFin datetime,    
+@Cultivo NVARCHAR(100)            
+AS           
+BEGIN    
+create table #DATO(    
+[Cuenta Inventario sys] NVARCHAR(50),    
+[Cuenta Inventario] NVARCHAR(50),    
+[Tipo Doc] NVARCHAR(50),    
+[Docnum] NVARCHAR(50),    
+[DocDate] NVARCHAR(50),    
+[OT SAP] NVARCHAR(50),    
+[Centro de Costo] NVARCHAR(50),    
+[Cultivo] NVARCHAR(150),    
+[Unidad] NVARCHAR(150),    
+/*[Centro de Costo2] NVARCHAR(50),   
+[Centro de Costo4] NVARCHAR(50),   
+[Centro de Costo5] NVARCHAR(50),*/  
+[TransValue] DECIMAL(18,4),    
+[TransNum] NVARCHAR(50),    
+[TransType] NVARCHAR(50),    
+[ItemCode] NVARCHAR(50),    
+[Dscription] NVARCHAR(250),    
+[ItmsGrpCod] NVARCHAR(50),    
+[Descripción Grupo] NVARCHAR(150),    
+[Cuenta sys]NVARCHAR(50),    
+[Cuenta] NVARCHAR(50),    
+[Cuenta Costo Prod] NVARCHAR(50),    
+[Cuenta Costo Prod sys] NVARCHAR(50),    
+[Seleccionar] NVARCHAR(5)   
+)    
+    
+create TABLE #CULTIVOS(    
+[Cultivo] NVARCHAR(150),    
+)    
+    
+INSERT INTO #CULTIVOS    
+SELECT DISTINCT T7.U_EXD_NOMLINEA     
+   FROM OPRC T7     
+   WHERE ISNULL(T7.U_EXD_NOMLINEA,'')<>''     
+   AND T7.U_EXD_NOMLINEA IN (    
+    SELECT DISTINCT T11.U_EXD_NOMLINEA     
+    FROM OJDT T9     
+    INNER JOIN JDT1 T10 ON T10.TransId=T9.TransId    
+    INNER JOIN OPRC T11 ON T11.PrcCode=T10.OcrCode3    
+ WHERE T9.TransCode='TRC'     
+ AND MONTH(T9.RefDate)=MONTH(@FInicio)    
+ AND YEAR(T9.RefDate)=YEAR(@FInicio))    
+      
+INSERT INTO #DATO            
+select InvntAct              [Cuenta Inventario sys],    
+(SELECT Segment_0 FROM OACT WHERE AcctCode=InvntAct)    [Cuenta Inventario],          
+CASE           
+ WHEN T1.TransType IN (59) THEN 'EM'            
+ WHEN T1.TransType IN (60) THEN 'SM'            
+ ELSE 'NI'           
+END                 [Tipo Doc],            
+CASE           
+ WHEN T1.TransType IN (59) THEN (select TOP 1 DocNum from OIGN Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ WHEN T1.TransType IN (60) THEN (select TOP 1 DocNum from OIGE Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ ELSE 0           
+END                 [Docnum],          
+                 T1.DocDate,            
+CASE           
+ WHEN T1.TransType IN (59) THEN (select TOP 1 TX.BaseRef from IGN1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ WHEN T1.TransType IN (60) THEN (select TOP 1 TX.BaseRef from IGE1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ ELSE 0           
+END                 [OT SAP],            
+(SELECT T99.OcrCode3 FROM OWOR T99 WHERE T99.DocNum=(CASE           
+ WHEN T1.TransType IN (59) THEN (select TOP 1 TX.BaseRef from IGN1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ WHEN T1.TransType IN (60) THEN (select TOP 1 TX.BaseRef from IGE1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ ELSE 0           
+END))                [Centro de Costo],      
+(SELECT T10.ItemName FROM OITM T10 WHERE T10.ITEMCODE=(SELECT T99.ItemCode FROM OWOR T99 WHERE T99.DocNum=(CASE           
+ WHEN T1.TransType IN (59) THEN (select TOP 1 TX.BaseRef from IGN1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ WHEN T1.TransType IN (60) THEN (select TOP 1 TX.BaseRef from IGE1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ ELSE 0           
+END)))                [Cultivo],    
+(SELECT T99.OcrCode FROM OWOR T99 WHERE T99.DocNum=(CASE           
+ WHEN T1.TransType IN (59) THEN (select TOP 1 TX.BaseRef from IGN1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ WHEN T1.TransType IN (60) THEN (select TOP 1 TX.BaseRef from IGE1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ ELSE 0           
+END))                [Unidad],    
+/*(SELECT T99.OcrCode2 FROM OWOR T99 WHERE T99.DocNum=(CASE           
+ WHEN T1.TransType IN (59) THEN (select TOP 1 TX.BaseRef from IGN1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ WHEN T1.TransType IN (60) THEN (select TOP 1 TX.BaseRef from IGE1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ ELSE 0           
+END))         [Centro de Costo2],    
+(SELECT T99.OcrCode4 FROM OWOR T99 WHERE T99.DocNum=(CASE           
+ WHEN T1.TransType IN (59) THEN (select TOP 1 TX.BaseRef from IGN1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ WHEN T1.TransType IN (60) THEN (select TOP 1 TX.BaseRef from IGE1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ ELSE 0           
+END))                [Centro de Costo4],    
+(SELECT T99.OcrCode5 FROM OWOR T99 WHERE T99.DocNum=(CASE           
+ WHEN T1.TransType IN (59) THEN (select TOP 1 TX.BaseRef from IGN1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ WHEN T1.TransType IN (60) THEN (select TOP 1 TX.BaseRef from IGE1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ ELSE 0           
+END))                [Centro de Costo5],  */  
+T1.TransValue,          
+T1.TransNum,          
+T1.TransType,          
+T1.ItemCode,          
+T1.Dscription,          
+T2.ItmsGrpCod,          
+(SELECT ItmsGrpNam FROM OITB WHERE ItmsGrpCod=T2.ItmsGrpCod)  [Descripción Grupo],            
+T1.CARDCODE               [Cuenta sys],            
+(SELECT T99.SEGMENT_0+'-'+t99.Segment_1+'-'+t99.Segment_2 FROM OACT T99 WHERE T99.ACCTCODE=T1.CARDCODE) [Cuenta],            
+(SELECT '71110005-00-00' FROM OITB Tx WHERE Tx.ItmsGrpCod=T2.ItmsGrpCod) [Cuenta Costo Prod],            
+(SELECT AcctCode FROM OACT WHERE FormatCode=(SELECT replace('71110005-00-00','-','') FROM OITB Tx WHERE Tx.ItmsGrpCod=T2.ItmsGrpCod)) [Cuenta Costo Prod sys],    
+             
+ 0                 Seleccionar    
+    
+ from OINM T1           
+ INNER JOIN OITM T2 ON T1.ItemCode=T2.ItemCode where TransType IN (59,60)            
+AND LEFT((SELECT T99.SEGMENT_0 FROM OACT T99 WHERE T99.ACCTCODE=T1.CARDCODE),2) LIKE '61%'          
+AND LEFT((SELECT T99.Segment_2 FROM OACT T99 WHERE T99.ACCTCODE=T1.CARDCODE),2) LIKE '91%'          
+AND (CASE           
+ WHEN T1.TransType IN (59) THEN (select TOP 1 TX.BaseRef from IGN1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ WHEN T1.TransType IN (60) THEN (select TOP 1 TX.BaseRef from IGE1 Tx WHERE Tx.DocEntry= T1.CreatedBy)            
+ ELSE 0           
+END) IN (SELECT T9.DocNum FROM OWOR T9 WHERE ISNULL(T9.U_EXD_FCierre,T9.CloseDate) BETWEEN @FInicio AND @FFin)    
+-- Validacion de asientos duplicados    
+and ISNULL((SELECT COUNT(*) FROM OJDT T9     
+ WHERE T9.TransCode='TRC'     
+ AND MONTH(T9.RefDate)=MONTH(@FInicio)    
+ AND YEAR(T9.RefDate)=YEAR(@FInicio)    
+ AND T9.Memo LIKE '%'+@Cultivo+'%'),0)=0    
+           
+ORDER BY [OT SAP]                
+    
+  /*select               
+'' as [Cuenta Inventario sys],    
+'' as [Cuenta Inventario],    
+'' as [Centro de Costo],    
+'' as "Cultivo",    
+'' as Unidad,    
+--SUM(TransValue) TransValue,    
+'' as ItemCode,    
+'' as Dscription,    
+'' as [Cuenta sys],    
+'' as Cuenta,    
+'' as [Cuenta Costo Prod],    
+'' as  "Cuenta 6 sys",    
+  0 as  "Seleccionar",    
+    
+                '' as "Cuenta 6",    
+                '' as "OcrCode3", --'"Centro de Costo"    
+                '' as "TransValue",    
+                '' as "Cuenta 7",--'"Cuenta Costo Prod"    
+                '' as "Cuenta 7 sys",    
+                '' as  "Dscription", --'Cultivo    
+               ''  as "OcrCode",    
+             ''  as   "OcrCode2",    
+             '' as "OcrCode4",    
+             '' as "OcrCode5"  */  
+               
+    
+IF RTRIM(LTRIM(@Cultivo)) ='TODOS'      
+SELECT   
+[Cuenta Inventario sys],    
+[Cuenta Inventario],    
+[Centro de Costo],    
+Cultivo,    
+Unidad,    
+SUM(TransValue) TransValue,    
+ItemCode,    
+Dscription,    
+[Cuenta sys],    
+Cuenta,    
+[Cuenta Costo Prod],    
+[Cuenta Costo Prod sys],    
+Seleccionar  
+FROM #DATO     
+WHERE Cultivo NOT IN (SELECT Cultivo FROM #CULTIVOS)    
+GROUP BY    
+[Cuenta Inventario sys],    
+[Cuenta Inventario],    
+[Centro de Costo],    
+Cultivo,    
+Unidad,    
+ItemCode,    
+Dscription,    
+[Cuenta sys],    
+Cuenta,    
+[Cuenta Costo Prod],    
+[Cuenta Costo Prod sys],    
+Seleccionar    
+ELSE    
+SELECT     
+[Cuenta Inventario sys],    
+[Cuenta Inventario],    
+[Centro de Costo],    
+Cultivo,    
+Unidad,    
+SUM(TransValue) TransValue,    
+ItemCode,    
+Dscription,    
+[Cuenta sys],    
+Cuenta,    
+[Cuenta Costo Prod],    
+[Cuenta Costo Prod sys],    
+Seleccionar       
+FROM #DATO     
+WHERE Cultivo = @Cultivo    
+GROUP BY    
+[Cuenta Inventario sys],    
+[Cuenta Inventario],    
+[Centro de Costo],   
+Cultivo,    
+Unidad,    
+ItemCode,    
+Dscription,    
+[Cuenta sys],    
+Cuenta,    
+[Cuenta Costo Prod],    
+[Cuenta Costo Prod sys],    
+Seleccionar     
+DROP  TABLE #DATO    
+END     

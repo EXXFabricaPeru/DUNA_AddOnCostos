@@ -1,0 +1,53 @@
+  
+CREATE PROCEDURE SP_CURSOR_MOVIMIENTO  
+(  
+@v_FI DATETIME,  
+@v_FF DATETIME  
+)  
+AS  
+BEGIN  
+--simple cursor in sql server   
+Declare @vid as int  
+Declare @vnroAsiento as decimal(18,6)  
+Declare @vnroLinea as decimal(18,6)  
+Declare @vFContabilizacion as datetime  
+Declare @velementoCosto as nvarchar(50)  
+Declare @vcuenta as nvarchar(50)  
+Declare @vnombreCuenta as nvarchar(50)  
+Declare @vcultivo as nvarchar(50)  
+Declare @vcodigoCC as nvarchar(50)  
+Declare @vnombreCC as nvarchar(50)  
+Declare @vCampania as nvarchar(50)  
+Declare @vsaldo as decimal(18,6)  
+Declare @vtipo as nvarchar(50)  
+DECLARE @CODE AS NVARCHAR(30)   
+  
+SET @CODE = (SELECT MAX(CONVERT(INT,ISNULL(Code,0)))FROM [@EXD_COSTOS])  
+-- declare a cursor  
+  
+DECLARE insert_cursor CURSOR FOR   
+SELECT ROW_NUMBER() OVER(ORDER BY Seleccionar)id,[nroAsiento],[nroLinea],[FContabilizacion],[elementoCosto],[cuenta],[nombreCuenta],[cultivo],[codigoCC],[nombreCC],[Campania],[saldo],[tipo] from TABLE_0 WHERE [FContabilizacion] BETWEEN  @v_FI  AND @v_FF  
+ 
+  
+OPEN insert_cursor  
+FETCH NEXT FROM insert_cursor into @vid,@vnroAsiento,@vnroLinea,@vFContabilizacion,@velementoCosto,@vcuenta,@vnombreCuenta,@vcultivo,@vcodigoCC,@vnombreCC,@vCampania,@vsaldo,@vtipo  
+  
+WHILE @@FETCH_STATUS=0  
+BEGIN  
+  
+Insert into [@EXD_COSTOS]  
+SELECT (@CODE+@vid),(@CODE+@vid),@vnroAsiento,@vnroLinea,@vFContabilizacion,@velementoCosto,@vcuenta,@vnombreCuenta,@vcultivo,@vcodigoCC,@vnombreCC,@vCampania,@vsaldo,@vtipo  
+   
+FETCH NEXT FROM insert_cursor into @vid,@vnroAsiento,@vnroLinea,@vFContabilizacion,@velementoCosto,@vcuenta,@vnombreCuenta,@vcultivo,@vcodigoCC,@vnombreCC,@vCampania,@vsaldo,@vtipo  
+  
+END  
+close insert_cursor  
+Deallocate insert_cursor  
+  
+TRUNCATE  TABLE TABLE_0  
+  
+END  
+  
+  
+  
+  

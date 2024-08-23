@@ -1,0 +1,109 @@
+    
+-- EXEC EXD_ORDENES_POR_REVALORIZAR '20210101','20210131'    
+          
+CREATE PROCEDURE [dbo].[EXD_ORDENES_POR_REVALORIZAR]            
+            
+@FINICIO DATETIME,            
+@FFIN DATETIME            
+            
+AS            
+BEGIN            
+                   
+SELECT    
+'0' Seleccionar,    
+t6.AcctCode as 'SYS Ajuste de Ventas',    
+T6.Segment_0, --    
+T11.OcrCode,    
+T11.DocEntry,                
+T10.[Nro OT],           
+max(T11.ItemCode) [Codigo Articulo],     
+T12.OnHand Cantidad,            
+max(T12.ItemName) [Nombre],            
+max(t11.OcrCode3) [Centro de Costo],            
+max(T13.OcrName) [Nombre Centro de Costo],            
+max(t11.CloseDate) [Fecha Revalorizacion],    
+T10.Account,            
+T10.Cuenta,            
+t10.AcctName,        
+SUM(T10.Saldos) Saldo            
+ FROM             
+    
+(SELECT            
+T0.TransId,            
+ISNULL(CONVERT(NVARCHAR,T1.Ref3Line),CONVERT(NVARCHAR,T1.Ref2)) [Nro OT],  
+T0.Memo,            
+T0.RefDate,            
+T1.Account,            
+T2.Segment_0 +'-'+T2.Segment_1+'-'+T2.Segment_2 [Cuenta],            
+t2.AcctName,            
+t1.Debit,            
+t1.Credit,            
+t1.Debit-t1.Credit [Saldos]            
+FROM OJDT T0            
+INNER JOIN JDT1 T1 ON T1.TransId=T0.TransId            
+INNER JOIN OACT T2 ON T2.AcctCode=T1.Account            
+WHERE T0.TransId IN     
+(        
+-- Asiento de ingresos            
+SELECT             
+T9.TransId            
+FROM OIGN T9            
+INNER JOIN IGN1 T10 ON T10.DocEntry=T9.DocEntry            
+WHERE REPLACE(T10.BaseRef,'-','') in (SELECT CONVERT(VARCHAR(20),T9.DocNum) FROM OWOR T9 WHERE ISNULL(T9.U_EXD_FCierre,T9.CloseDate) BETWEEN @FInicio AND @FFin)    
+UNION            
+-- Asiento de consumos            
+SELECT             
+T9.TransId            
+FROM OIGE T9            
+INNER JOIN IGE1 T10 ON T10.DocEntry=T9.DocEntry            
+WHERE REPLACE(T10.BaseRef,'-','') in (SELECT CONVERT(VARCHAR(20),T9.DocNum) FROM OWOR T9 WHERE ISNULL(T9.U_EXD_FCierre,T9.CloseDate) BETWEEN @FInicio AND @FFin)    
+UNION            
+-- Asiento de cierre            
+SELECT             
+T9.TransId            
+FROM OJDT T9            
+INNER JOIN JDT1 T10 ON T10.TransId=T9.TransId            
+WHERE T9.TransType=202 AND REPLACE(T0.Ref1,'-','') IN (SELECT CONVERT(VARCHAR(20),T9.DocNum) FROM OWOR T9 WHERE ISNULL(T9.U_EXD_FCierre,T9.CloseDate) BETWEEN @FInicio AND @FFin)    
+    
+UNION            
+-- Revalorizaciones            
+SELECT             
+T9.TransId            
+FROM OJDT T9            
+INNER JOIN JDT1 T10 ON T10.TransId=T9.TransId            
+WHERE T9.TransType=162     
+-- 16/06/2017 AGREGADO POR ACM PARA EXCLUIR LOS RI POSTERIOR AL 7.12    
+--AND ISNULL(T9.TransCode,'') <> 'RIF'    
+-- FIN AGREGADO    
+AND REPLACE(T10.Ref2,'-','') IN (SELECT CONVERT(VARCHAR(20),T9.DocNum) FROM OWOR T9 WHERE ISNULL(T9.U_EXD_FCierre,T9.CloseDate) BETWEEN @FInicio AND @FFin)    
+    
+UNION            
+-- Reclasificaciones    
+SELECT             
+T9.TransId            
+FROM OJDT T9            
+INNER JOIN JDT1 T10 ON T10.TransId=T9.TransId            
+WHERE T9.TransType=30 AND REPLACE(T10.Ref2,'-','') IN (SELECT CONVERT(VARCHAR(20),T9.DocNum) FROM OWOR T9 WHERE ISNULL(T9.U_EXD_FCierre,T9.CloseDate) BETWEEN @FInicio AND @FFin)    
+--AND T9.TransCode='RCO'       
+)          
+          
+) T10             
+INNER JOIN OWOR T11 ON CONVERT(NVARCHAR,T11.DocNum) = REPLACE(T10.[Nro OT],'-','')            
+INNER JOIN OITM T12 ON T12.ItemCode=T11.ItemCode            
+LEFT JOIN OOCR T13 ON T13.OcrCode=T11.OcrCode3    
+INNER JOIN OITB T5 ON T5.ItmsGrpCod=T12.ItmsGrpCod    
+LEFT JOIN OACT T6 ON T6.AcctCode=T5.SaleCostAc    
+        
+WHERE T10.Account IN (SELECT ISNULL(T99.WipVarAcct,'') FROM OITB T99)    
+AND CONVERT(NVARCHAR,T11.DocNum) NOT IN (SELECT ISNULL(Ref2,'-1') FROM OIGN     
+      UNION     
+      SELECT ISNULL(Ref2,'-1') FROM OIGE     
+      UNION    
+      SELECT ISNULL(Ref2,'-1') FROM OMRV)             
+--AND T11.DocNum NOT IN (122654)    
+GROUP BY     
+t6.AcctCode,  
+T6.Segment_0,    
+T11.OcrCode,T11.DocEntry,T10.[Nro OT],T12.OnHand,T10.Account,T10.Cuenta,t10.AcctName        
+HAVING SUM(T10.Saldos)<>0            
+END 

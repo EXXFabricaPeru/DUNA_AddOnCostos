@@ -1,0 +1,305 @@
+  
+  
+-- EXD_ANALISIS_EJECUTADO_REAL_DISTRIBUCION_CIF_0715_0716 '20170801','20170831'   
+          
+create PROCEDURE [dbo].[EXD_ANALISIS_EJECUTADO_REAL_DISTRIBUCION_CIF_0715_0716]                          
+@FINICIO DATETIME,                          
+@FFIN DATETIME  
+                                       
+AS                          
+BEGIN                          
+  
+--CREATE TABLE #tabla1(  
+--Seleccionar nvarchar(100),  
+--SYSCODE nvarchar(100),  
+--Cuenta nvarchar(100),  
+--PrcCode nvarchar(100),  
+--PrcName nvarchar(100),  
+--Debe decimal(18,6),  
+--Haber decimal(18,6)  
+--)  
+  
+--INSERT INTO #tabla1     
+              
+SELECT   
+'0' Seleccionar,           
+T11.SYSCODE,        
+T11.Cuenta,        
+T11.PrcCode,          
+T11.PrcName,   
+  
+CASE        
+ WHEN SUM(T11.[Saldo Factor]) >0        
+ THEN SUM(T11.[Saldo Factor])        
+ ELSE 0        
+END*10000 [Debe],        
+  
+CASE        
+ WHEN SUM(T11.[Saldo Factor]) >0        
+ THEN 0        
+ ELSE SUM(T11.[Saldo Factor])*-1        
+END*10000  [Haber]  
+        
+--SUM(T11.[Saldo Factor]) [Saldo]        
+FROM          
+(SELECT                          
+T1.TransId [Nro asiento],                          
+t1.Line_ID [Nro Linea],                          
+ISNULL(t1.RefDate,'20991231') [Fecha Contabilizacion],          
+MONTH(t1.RefDate) [Mes Contabilizacion],          
+YEAR(t1.RefDate) [Anio Contabilizacion],          
+CASE T0.TransCode                    
+ WHEN 'TRC' THEN 'MATERIALES'                    
+ WHEN 'RCC' THEN 'CIF'      
+ ELSE                     
+ CASE ISNULL(T3.U_EXD_NOMLINEA,'99')    
+  WHEN '99' THEN 'CIF'    
+  ELSE    
+    CASE LEFT(T2.SEGMENT_0,2)                          
+     WHEN '62' THEN 'MANO DE OBRA'                          
+     WHEN '61' THEN (                      
+    CASE (ISNULL((CASE t0.TransType                        
+   when '60' then ((SELECT MAX(T7.BaseRef) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                        
+   when '59' then ((SELECT MAX(T7.BaseRef) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                        
+   WHEN '202' THEN '1234'                      
+   END                        
+     ),'0000'))                      
+     WHEN '0000' THEN 'CIF'                      
+     ELSE 'MATERIALES'                      
+    END                      
+     )                    
+     ELSE 'CIF'                          
+    END    
+ END    
+ END [Elemento de Costo],                                             
+t2.AcctCode [SYSCODE],        
+T2.Segment_0+'-'+T2.Segment_1+'-'+T2.Segment_2 [Cuenta],                          
+t2.AcctName [Nombre Cuenta],                          
+ISNULL(t3.U_EXD_NOMLINEA,                                      
+ISNULL((SELECT T9.U_EXD_NOMLINEA FROM OPRC T9 WHERE T9.PrcCode=ISNULL(T5.PrcCode,                      
+ (CASE t0.TransType                      
+  when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(T7.BaseRef) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry           
+       WHERE T6.TransId=T0.TransId))                      
+  when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(T7.BaseRef) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry           
+       WHERE T6.TransId=T0.TransId))          
+  WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                      
+  END                      
+ )          
+ )),'NO ASIGNADO')      
+ )      
+ [Cultivo],                        
+ISNULL(T5.PrcCode,                        
+(CASE t0.TransType                        
+ when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=            
+  (SELECT MAX(T7.BaseRef) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                        
+ when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(T7.BaseRef) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                        
+ WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                        
+ END                        
+)                        
+) [Codigo Centro de Costo],                          
+ISNULL(T5.PrcName,                        
+(SELECT T4.PrcName FROM OPRC T4 WHERE T4.PrcCode=(CASE t0.TransType                        
+ when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(T7.BaseRef) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                        
+ when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(T7.BaseRef) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                        
+ WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                        
+ END                        
+))                        
+) [Nombre Centro de Costo],                          
+T1.Debit [Debito],                          
+T1.Credit [Credito],                 
+ISNULL(T4.PrcAmount*(100/T3.OcrTotal),0)*(T1.Debit-T1.Credit)/100 [Saldo],          
+(t1.Debit-t1.Credit)  
+*(          
+CASE WHEN T0.RefDate BETWEEN T12.[Fecha Inicio] AND T12.[Fecha Fin]          
+  THEN T12.Hectareas          
+  ELSE 0          
+END           
+)/(SELECT           
+ SUM(ISNULL(T9.U_EXD_Hect,0))          
+ FROM OPRC T9          
+ WHERE ISNULL(T9.U_EXD_Hect,0)<>0           
+ AND T0.RefDate BETWEEN T9.ValidFrom AND ISNULL(T9.ValidTo,'20991231')          
+ )   
+[Saldo Factor],          
+T12.PrcCode,          
+T12.PrcName          
+FROM OJDT T0                          
+INNER JOIN JDT1 T1 ON T1.TransId=T0.TransId                          
+INNER JOIN OACT T2 ON T2.AcctCode=T1.Account            
+LEFT JOIN [dbo].[OOCR] T3 ON T3.OcrCode = T1.OcrCode3  
+LEFT JOIN [dbo].[OCR1] T4 ON T4.OcrCode = T3.OcrCode --AND (T0.RefDate BETWEEN T4.ValidFrom AND T4.ValidTo)  
+LEFT JOIN [dbo].[OPRC] T5 ON T5.PrcCode = T4.PrcCode,  
+  (SELECT           
+   T9.PrcCode,          
+   T9.PrcName,          
+   T9.ValidFrom [Fecha Inicio],          
+   ISNULL(T9.ValidTo,'20991231') [Fecha Fin],          
+   T9.U_EXD_Hect [Hectareas]          
+   FROM OPRC T9          
+   WHERE ISNULL(T9.U_EXD_Hect,0)<>0           
+   ) T12 -- Tabla Factores                          
+            
+WHERE LEFT(T2.Segment_0,1) IN ('6')                          
+AND T2.AcctCode IN (                          
+     SELECT                           
+     t10.AcctCode                          
+     FROM OFRC T9                           
+     INNER JOIN FRC1 T10 ON T10.TemplateId=T9.TemplateId                          
+     WHERE T9.Name LIKE '%Ejecutado%'                          
+     )                          
+AND (t1.Debit-t1.Credit)<>0            
+AND T0.RefDate>=@FINICIO            
+AND T1.RefDate<=@FFIN            
+AND T0.TransType NOT IN (-3,-2)  )T11             
+where T11.Cultivo='NO ASIGNADO'       
+and  
+(MONTH(t11.[Fecha Contabilizacion]) not in (select DISTINCT MONTH(T8.RefDate) from OJDT T8 WHERE T8.TransCode='RCC')  
+ AND YEAR(t11.[Fecha Contabilizacion]) not in (select DISTINCT YEAR(T8.RefDate) from OJDT T8 WHERE T8.TransCode='RCC')  
+)     
+group by T11.SYSCODE,T11.Cuenta,T11.PrcCode,T11.PrcName          
+HAVING SUM(T11.[Saldo Factor])<>0        
+    
+    
+UNION ALL  
+          
+                
+SELECT  
+'0' Seleccionar,               
+T11.SYSCODE,        
+T11.Cuenta,  
+'' PrcCode,  
+'' PrcName,        
+  
+CASE        
+ WHEN SUM(T11.[Saldo Factor]) >0        
+ then 0        
+ ELSE SUM(T11.[Saldo Factor])*-1        
+END*10000 [Debe]  ,        
+  
+CASE        
+ WHEN SUM(T11.[Saldo Factor]) >0        
+ THEN SUM(T11.[Saldo Factor])        
+ ELSE 0        
+END*10000 [Haber] --,        
+--SUM(T11.[Saldo Factor]) [Saldo]        
+FROM          
+  
+(SELECT                          
+T1.TransId [Nro asiento],                          
+t1.Line_ID [Nro Linea],                          
+ISNULL(t1.RefDate,'20991231') [Fecha Contabilizacion],          
+MONTH(t1.RefDate) [Mes Contabilizacion],          
+YEAR(t1.RefDate) [Anio Contabilizacion],          
+CASE T0.TransCode                    
+ WHEN 'TRC' THEN 'MATERIALES'                    
+ WHEN 'RCC' THEN 'CIF'      
+ ELSE                     
+ CASE ISNULL(T3.U_EXD_NOMLINEA,'99')    
+  WHEN '99' THEN 'CIF'    
+  ELSE    
+    CASE LEFT(T2.SEGMENT_0,2)                          
+     WHEN '62' THEN 'MANO DE OBRA'                          
+     WHEN '61' THEN (                      
+    CASE (ISNULL((CASE t0.TransType                        
+   when '60' then ((SELECT MAX(T7.BaseRef) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                        
+   when '59' then ((SELECT MAX(T7.BaseRef) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                        
+   WHEN '202' THEN '1234'                      
+   END                        
+     ),'0000'))                      
+     WHEN '0000' THEN 'CIF'                      
+     ELSE 'MATERIALES'                      
+    END                      
+     )                    
+     ELSE 'CIF'                          
+    END    
+ END    
+ END [Elemento de Costo],                                             
+t2.AcctCode [SYSCODE],        
+T2.Segment_0+'-'+T2.Segment_1+'-'+T2.Segment_2 [Cuenta],                          
+t2.AcctName [Nombre Cuenta],                          
+ISNULL(t3.U_EXD_NOMLINEA,                                      
+ISNULL((SELECT T9.U_EXD_NOMLINEA FROM OPRC T9 WHERE T9.PrcCode=ISNULL(T3.PrcCode,                      
+ (CASE t0.TransType                      
+  when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(T7.BaseRef) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry           
+       WHERE T6.TransId=T0.TransId))                      
+  when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(T7.BaseRef) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry           
+       WHERE T6.TransId=T0.TransId))          
+  WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                      
+  END                      
+ )          
+ )),'NO ASIGNADO')      
+ )      
+ [Cultivo],                        
+ISNULL(T3.PrcCode,                        
+(CASE t0.TransType                        
+ when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=            
+  (SELECT MAX(T7.BaseRef) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                        
+ when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(T7.BaseRef) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                        
+ WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                        
+ END                        
+)                        
+) [Codigo Centro de Costo],                          
+ISNULL(T3.PrcName,                        
+(SELECT T4.PrcName FROM OPRC T4 WHERE T4.PrcCode=(CASE t0.TransType                        
+ when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(T7.BaseRef) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                        
+ when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(T7.BaseRef) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                        
+ WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                        
+ END                        
+))                        
+) [Nombre Centro de Costo],                          
+T1.Debit [Debito],                          
+T1.Credit [Credito],                 
+t1.Debit-t1.Credit [Saldo],          
+(t1.Debit-t1.Credit)*(          
+CASE WHEN T0.RefDate BETWEEN T12.[Fecha Inicio] AND T12.[Fecha Fin]          
+  THEN T12.Hectareas          
+  ELSE 0          
+END           
+)/(SELECT           
+ SUM(ISNULL(T9.U_EXD_Hect,0))          
+ FROM OPRC T9          
+ WHERE ISNULL(T9.U_EXD_Hect,0)<>0            AND T0.RefDate BETWEEN T9.ValidFrom AND ISNULL(T9.ValidTo,'20991231')          
+ ) [Saldo Factor],          
+T12.PrcCode,          
+T12.PrcName          
+FROM OJDT T0                          
+INNER JOIN JDT1 T1 ON T1.TransId=T0.TransId                          
+INNER JOIN OACT T2 ON T2.AcctCode=T1.Account                          
+LEFT JOIN OPRC T3 ON T3.PrcCode=T1.OcrCode3,          
+  (SELECT           
+   T9.PrcCode,          
+   PrcName,          
+   T9.ValidFrom [Fecha Inicio],          
+   ISNULL(T9.ValidTo,'20991231') [Fecha Fin],          
+   T9.U_EXD_Hect [Hectareas]          
+   FROM OPRC T9          
+   WHERE ISNULL(T9.U_EXD_Hect,0)<>0           
+   ) T12 -- Tabla Factores                          
+            
+WHERE LEFT(T2.Segment_0,1) IN ('6')                          
+AND T2.AcctCode IN (                          
+     SELECT                           
+     t10.AcctCode                          
+     FROM OFRC T9                           
+     INNER JOIN FRC1 T10 ON T10.TemplateId=T9.TemplateId                          
+     WHERE T9.Name LIKE '%Ejecutado%'                          
+     )                          
+AND (t1.Debit-t1.Credit)<>0            
+AND T0.RefDate>=@FINICIO            
+AND T1.RefDate<=@FFIN            
+AND T0.TransType NOT IN (-3,-2)  )T11             
+where T11.Cultivo='NO ASIGNADO'  
+and  
+(MONTH(t11.[Fecha Contabilizacion]) not in (select DISTINCT MONTH(T8.RefDate) from OJDT T8 WHERE T8.TransCode='RCC')  
+ AND YEAR(t11.[Fecha Contabilizacion]) not in (select DISTINCT YEAR(T8.RefDate) from OJDT T8 WHERE T8.TransCode='RCC')  
+)   
+group by T11.SYSCODE,T11.Cuenta  
+HAVING SUM(T11.[Saldo Factor])<>0         
+  
+--SELECT Seleccionar,SYSCODE,Cuenta,PrcCode,PrcName,Debe,Haber   
+--FROM   #tabla1   
+--where isnull(PrcName,'99') like @PRODUCTO+'%'  
+  
+--DROP TABLE #tabla1;  
+       
+END 

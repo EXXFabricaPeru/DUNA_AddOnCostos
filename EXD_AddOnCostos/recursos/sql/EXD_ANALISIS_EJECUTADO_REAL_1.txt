@@ -1,0 +1,141 @@
+  
+-- [EXD_ANALISIS_EJECUTADO_REAL_1] '20180901','20180930','P'  
+  
+CREATE  PROCEDURE [dbo].[EXD_ANALISIS_EJECUTADO_REAL_1]    
+@FINICIO DATETIME,                                              
+@FFIN DATETIME,    
+@ESTADOOT NVARCHAR(10)    
+AS    
+BEGIN    
+    
+CREATE TABLE #TABLE    
+(    
+cultivo nvarchar(100),    
+Campania nvarchar(100),    
+elementoCosto nvarchar(100),    
+codigoCC nvarchar(100),    
+saldo decimal(18,6)    
+);    
+     
+INSERT #TABLE exec EXD_ANALISIS_EJECUTADO_REAL @FINICIO,@FFIN     
+  
+---------- Ordenes Cerradas  
+  
+SELECT     
+'0' Seleccionar,    
+T3.DocEntry,    
+T3.DocNum ,    
+T3.CloseDate,    
+CASE     
+ WHEN ISNULL(T3.CloseDate,'') = '' THEN 'PROCESO'     
+ ELSE 'CERRADO' END OTEstado,    
+T1.cultivo,    
+T1.Campania,    
+T1.elementoCosto,    
+T1.codigoCC,  
+t3.OcrCode as 'Unidad Negocio',    
+T1.saldo,    
+T4.ItemCode,    
+T4.OnHand,    
+t6.AcctCode as 'SYS Costo de Ventas',    
+T6.Segment_0+'-'+T6.Segment_1+'-'+T6.Segment_2 AS 'Costo de Ventas',    
+CASE   
+  WHEN T1.elementoCosto = 'CIF' THEN (SELECT AcctCode FROM OACT  WHERE (Segment_0+'-'+Segment_1+'-'+Segment_2)='71310003-00-00')  
+  WHEN T1.elementoCosto ='MANO DE OBRA' THEN (SELECT AcctCode FROM OACT  WHERE (Segment_0+'-'+Segment_1+'-'+Segment_2)='71310002-00-00')  
+  WHEN T1.elementoCosto ='MATERIALES' THEN (SELECT AcctCode FROM OACT  WHERE (Segment_0+'-'+Segment_1+'-'+Segment_2)='71310001-00-00')   
+END as 'SYS Ajuste de Ventas',    
+CASE   
+  WHEN T1.elementoCosto = 'CIF' THEN (SELECT (Segment_0+'-'+Segment_1+'-'+Segment_2) FROM OACT  WHERE (Segment_0+'-'+Segment_1+'-'+Segment_2)='71310003-00-00')  
+  WHEN T1.elementoCosto ='MANO DE OBRA' THEN (SELECT (Segment_0+'-'+Segment_1+'-'+Segment_2) FROM OACT  WHERE (Segment_0+'-'+Segment_1+'-'+Segment_2)='71310002-00-00')  
+  WHEN T1.elementoCosto ='MATERIALES' THEN (SELECT (Segment_0+'-'+Segment_1+'-'+Segment_2) FROM OACT  WHERE (Segment_0+'-'+Segment_1+'-'+Segment_2)='71310001-00-00')   
+END AS 'Ajuste de Ventas',    
+T5.U_EXD_NROCTA,    
+T5.U_EXD_NROCTA AS 'U_EXD_NROCTAsys'     
+    
+FROM OWOR T3     
+INNER JOIN #TABLE T1 ON ISNULL(T1.Campania,'99') collate SQL_Latin1_General_CP1_CI_AS = ISNULL(T3.U_EXD_CAMPAN,'98') collate SQL_Latin1_General_CP1_CI_AS     
+AND ISNULL(T1.codigoCC,'99') collate SQL_Latin1_General_CP1_CI_AS = ISNULL(T3.OcrCode3,'99') collate SQL_Latin1_General_CP1_CI_AS     
+INNER JOIN OITM T4 ON T4.ItemCode=T3.ItemCode    
+INNER JOIN OITB T5 ON ISNULL(T5.ItmsGrpCod,'99')=ISNULL(T4.ItmsGrpCod,'98')    
+LEFT JOIN  OACT  T6 ON ISNULL(T6.AcctCode,'99')=ISNULL(T5.SaleCostAc,'98')    
+LEFT JOIN OACT T7 ON ISNULL(T7.AcctCode,'99')=ISNULL(T5.WipVarAcct,'98')    
+WHERE     
+ CASE @ESTADOOT    
+ WHEN 'C' THEN 'C'     
+ ELSE 'P' END = 'C'  
+ AND   
+ CASE     
+ WHEN ISNULL(ISNULL(T3.U_EXD_FCierre,T3.CloseDate),'') = '' THEN '20991231'     
+ ELSE ISNULL(T3.U_EXD_FCierre,T3.CloseDate) END BETWEEN @FINICIO AND @FFIN  
+ AND T3.Status NOT IN ('C')  
+ AND round(T1.saldo,2)<>0  
+  
+UNION ALL  
+  
+----- Productos en proceso ----  
+  
+SELECT     
+'0' Seleccionar,    
+T3.DocEntry,    
+T3.DocNum ,    
+T3.CloseDate,    
+CASE     
+ WHEN ISNULL(T3.CloseDate,'') = '' THEN 'PROCESO'     
+ ELSE 'CERRADO' END OTEstado,    
+T1.cultivo,    
+T1.Campania,    
+T1.elementoCosto,    
+T1.codigoCC,    
+t3.OcrCode as 'Unidad Negocio',    
+T1.saldo,    
+T4.ItemCode,    
+T4.OnHand,    
+t6.AcctCode as 'SYS Costo de Ventas',    
+T6.Segment_0+'-'+T6.Segment_1+'-'+T6.Segment_2 AS 'Costo de Ventas',    
+CASE   
+  WHEN T1.elementoCosto = 'CIF' THEN (SELECT AcctCode FROM OACT  WHERE (Segment_0+'-'+Segment_1+'-'+Segment_2)='71310003-00-00')  
+  WHEN T1.elementoCosto ='MANO DE OBRA' THEN (SELECT AcctCode FROM OACT  WHERE (Segment_0+'-'+Segment_1+'-'+Segment_2)='71310002-00-00')  
+  WHEN T1.elementoCosto ='MATERIALES' THEN (SELECT AcctCode FROM OACT  WHERE (Segment_0+'-'+Segment_1+'-'+Segment_2)='71310001-00-00')   
+END as 'SYS Ajuste de Ventas',    
+CASE   
+  WHEN T1.elementoCosto = 'CIF' THEN (SELECT (Segment_0+'-'+Segment_1+'-'+Segment_2) FROM OACT  WHERE (Segment_0+'-'+Segment_1+'-'+Segment_2)='71310003-00-00')  
+  WHEN T1.elementoCosto ='MANO DE OBRA' THEN (SELECT (Segment_0+'-'+Segment_1+'-'+Segment_2) FROM OACT  WHERE (Segment_0+'-'+Segment_1+'-'+Segment_2)='71310002-00-00')  
+  WHEN T1.elementoCosto ='MATERIALES' THEN (SELECT (Segment_0+'-'+Segment_1+'-'+Segment_2) FROM OACT  WHERE (Segment_0+'-'+Segment_1+'-'+Segment_2)='71310001-00-00')   
+END AS 'Ajuste de Ventas',    
+T5.U_EXD_NROCTA,    
+T5.U_EXD_NROCTA AS 'U_EXD_NROCTAsys'     
+    
+FROM OWOR T3     
+INNER JOIN #TABLE T1 ON ISNULL(T1.Campania,'99') collate SQL_Latin1_General_CP1_CI_AS = ISNULL(T3.U_EXD_CAMPAN,'98') collate SQL_Latin1_General_CP1_CI_AS     
+AND ISNULL(T1.codigoCC,'99') collate SQL_Latin1_General_CP1_CI_AS = ISNULL(T3.OcrCode3,'99') collate SQL_Latin1_General_CP1_CI_AS     
+INNER JOIN OITM T4 ON T4.ItemCode=T3.ItemCode    
+INNER JOIN OITB T5 ON ISNULL(T5.ItmsGrpCod,'99')=ISNULL(T4.ItmsGrpCod,'98')    
+LEFT JOIN  OACT  T6 ON ISNULL(T6.AcctCode,'99')=ISNULL(T5.SaleCostAc,'98')    
+LEFT JOIN OACT T7 ON ISNULL(T7.AcctCode,'99')=ISNULL(T5.WipVarAcct,'98')    
+    
+WHERE     
+ --CONVERT(NVARCHAR,T3.DocNum) NOT IN  (SELECT ISNULL(Ref2,'-1') FROM OIGN     
+ --          UNION     
+ --          SELECT ISNULL(Ref2,'-1') FROM OIGE     
+ --          UNION     
+ --          SELECT ISNULL(Ref2,'-1') FROM OMRV)      
+ --AND   
+   
+ CASE @ESTADOOT    
+ WHEN 'P' THEN 'P'     
+ ELSE 'C' END = 'P'  
+ AND   
+ CASE     
+ WHEN ISNULL(ISNULL(T3.U_EXD_FCierre,T3.CloseDate),'') = '' THEN '20991231'     
+ ELSE ISNULL(T3.U_EXD_FCierre,T3.CloseDate) END ='20991231'  
+ AND T3.Status NOT IN ('C') -- No esten Cancelados  
+ AND round(T1.saldo,2)<>0  
+ AND T1.codigoCC collate SQL_Latin1_General_CP1_CI_AS NOT IN (SELECT T9.OcrCode3 FROM JDT1 T9   
+      INNER JOIN OJDT T10 ON T10.TransId=T9.TransId  
+      WHERE T10.TransCode='PPC' AND T10.RefDate>=@FINICIO   
+      AND T10.RefDate<=@FFIN AND ISNULL(T10.StornoToTr,'')='')  
+ORDER BY 3    
+DROP TABLE #TABLE    
+END  
+  
+  

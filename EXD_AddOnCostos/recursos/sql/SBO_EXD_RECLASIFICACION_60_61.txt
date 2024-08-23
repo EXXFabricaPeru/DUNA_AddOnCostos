@@ -1,0 +1,68 @@
+  
+  
+--[SBO_EXD_RECLASIFICACION_60_61] '20171001','20171031'  
+  
+CREATE  PROCEDURE [dbo].[SBO_EXD_RECLASIFICACION_60_61]  
+@IN_FECHA_INICIO  datetime,  
+@IN_FECHA_FIN datetime  
+AS  
+BEGIN  
+  
+DECLARE @ctacode char(100);  
+DECLARE @ctaname char(100);  
+DECLARE @ctasys char(100);  
+  
+set @ctacode = '              ';  
+set @ctasys =  '              ';  
+set @ctaname = '              ';  
+  
+SELECT   T10.TransId,T10.RefDate, SUM(T10.Saldo) Valor,@ctacode CodigoCTA,@ctasys CuentaSYS,@ctaname NombreCTA, '0' Seleccionar  
+     FROM     
+       (SELECT T1.TransId,  
+         T0.RefDate,  
+          left(T2.Segment_0,2)  
+          [Cuenta],  
+           SUM(T1.Debit) [Debe],  
+           SUM(T1.Credit) [Haber],  
+           SUM(T1.Debit) - SUM(T1.Credit) [Saldo],  
+           MAX(isnull(t0.TransCode,'')) [Tipo],  
+           T0.TransCode  
+        FROM OJDT T0   
+        INNER JOIN JDT1 T1 ON T1.TransId=T0.TransId   
+        INNER JOIN OACT T2 ON T2.AcctCode=T1.Account   
+        WHERE T0.TransId IN    
+         (SELECT TransId   
+         FROM JDT1 T9   
+         INNER JOIN OACT T10 ON T10.AcctCode=T9.Account   
+         WHERE LEFT(T10.Segment_0,2) LIKE '61%'   
+         AND T9.RefDate>=@IN_FECHA_INICIO   
+         AND T9.RefDate<=@IN_FECHA_FIN)   
+         and t2.segment_2 in ('00')   
+         and left(t2.segment_0,2) in ('60','61')   
+         GROUP BY T2.Segment_0,T2.Segment_2,T1.TransId,T0.TransCode,T0.RefDate      
+UNION    
+SELECT T1.TransId,  
+T0.RefDate,  
+ left(T2.Segment_0,2) [Cuenta],  
+ SUM(T1.Debit) [Debe],  
+ SUM(T1.Credit) [Haber],  
+ SUM(T1.Debit) - SUM(T1.Credit) [Saldo],  
+ MAX(isnull(t0.TransCode,'')) [Tipo],  
+ T0.TransCode  
+ FROM OJDT T0   
+ INNER JOIN JDT1 T1 ON T1.TransId=T0.TransId   
+ INNER JOIN OACT T2 ON T2.AcctCode=T1.Account   
+ WHERE T0.TransId IN    
+ (SELECT TransId   
+ FROM JDT1 T9   
+ INNER JOIN OACT T10 ON T10.AcctCode=T9.Account   
+ WHERE LEFT(T10.Segment_0,2) LIKE '60%'   
+ AND T9.RefDate>=@IN_FECHA_INICIO   
+ AND T9.RefDate<=@IN_FECHA_FIN)   
+ and t2.segment_2 in ('00')   
+ and left(t2.segment_0,2) in ('60','61')   
+ GROUP BY T2.Segment_0,T2.Segment_2,T1.TransId,T0.TransCode,T0.RefDate ) T10  
+ where t10.Tipo<>'ANU'  
+ AND isnull(T10.TransCode,'') <> 'REC'  
+ GROUP BY T10.TransId,T10.RefDate HAVING SUM(T10.Saldo)<>0  
+END
