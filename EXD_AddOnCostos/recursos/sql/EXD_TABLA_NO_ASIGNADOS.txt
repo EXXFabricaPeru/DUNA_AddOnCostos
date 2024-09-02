@@ -1,0 +1,152 @@
+	
+-- exec [EXD_TABLA_NO_ASIGNADOS] '20180801','20180831'	
+	
+	
+CREATE PROCEDURE [dbo].[EXD_TABLA_NO_ASIGNADOS]	
+@FINICIO DATETIME,	
+@FFIN DATETIME	
+AS	
+BEGIN	
+	
+	
+SELECT	
+T12.Periodo,	
+T12.PrcCode,	
+T12.PrcName,	
+T12.Cuenta,	
+t12.[Nombre Cuenta],	
+SUM(T12.Saldo) as 'Saldo',	
+t12.U_EXD_UNINEG,	
+'HEC' AS 'Tipo distribucion'	
+	
+FROM	
+(	
+	
+SELECT	
+(SELECT T8.Code FROM OFPR T8 WHERE @FINICIO BETWEEN T8.F_RefDate AND T8.T_RefDate) AS 'Periodo',	
+T11.PrcCode,	
+T11.PrcName,	
+T11.Cuenta,	
+t11.[Nombre Cuenta],	
+sum(t11.Saldo) as 'Saldo',	
+CASE ISNULL(T11.U_EXD_UNINEG,'HOR')	
+WHEN '' THEN 'HOR'	
+ELSE ISNULL(T11.U_EXD_UNINEG,'HOR') END AS 'U_EXD_UNINEG'	
+FROM	
+(	
+	
+SELECT	
+T1.TransId [Nro asiento],	
+t1.Line_ID [Nro Linea],	
+t1.RefDate [Fecha Contabilizacion],	
+MONTH(t1.RefDate) [Mes Contabilizacion],	
+YEAR(t1.RefDate) [Anio Contabilizacion],	
+CASE ISNULL(T2.Details,'')	
+WHEN '' THEN	
+CASE T0.TransCode	
+WHEN 'TRC' THEN 'MATERIALES'	
+WHEN 'RCC' THEN 'CIF'	
+ELSE	
+CASE LEFT(T2.SEGMENT_0,2)	
+WHEN '62' THEN 'MANO DE OBRA'	
+WHEN '61' THEN 'MATERIALES'	
+--  (	
+--CASE (ISNULL((CASE t0.TransType	
+--   when '60' then	
+--   ((SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))	
+--   when '59' then ((SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))	
+--   WHEN '202' THEN '1234'	
+--   END	
+--  ),'0000'))	
+--  WHEN '0000' THEN 'CIF'	
+--  ELSE 'MATERIALES'	
+-- END	
+--  )	
+ELSE 'CIF'	
+END	
+END	
+ELSE UPPER(T2.Details)	
+END	
+[Elemento de Costo],	
+t2.AcctCode [SYSCODE],	
+T2.Segment_0+'-'+T2.Segment_1+'-'+T2.Segment_2 [Cuenta],	
+t2.AcctName [Nombre Cuenta],	
+ISNULL(t3.U_EXD_NOMLINEA,	
+ISNULL((SELECT T9.U_EXD_NOMLINEA FROM OPRC T9 WHERE T9.PrcCode=ISNULL(T5.PrcCode,'ABC'	
+--(CASE t0.TransType	
+-- when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry	
+--      WHERE T6.TransId=T0.TransId))	
+-- when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry	
+--      WHERE T6.TransId=T0.TransId))	
+-- WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)	
+-- WHEN '30' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE cast(T5.DocNum as nvarchar(64))=T0.Ref1) -- Cuando se usa el campo de fecha de cierre diferente al de SAP	
+-- END	
+--)	
+)),'NO ASIGNADO')	
+)	
+[Cultivo],	
+--ISNULL(T5.PrcCode,	
+--(CASE t0.TransType	
+-- when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=	
+--  (SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))	
+-- when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))	
+	
+-- WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)	
+-- END	
+--)	
+--)	
+T5.PrcCode [Codigo Centro de Costo],	
+--ISNULL(T5.PrcName,	
+--(SELECT T4.PrcName FROM OPRC T4 WHERE T4.PrcCode=(CASE t0.TransType	
+-- when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))	
+	
+-- when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))	
+-- WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)	
+-- END	
+--))	
+--)	
+T5.PrcName [Nombre Centro de Costo],	
+T1.Debit [Debito],	
+T1.Credit [Credito],	
+(t1.Debit-t1.Credit)*ISNULL((t4.PrcAmount/t4.OcrTotal),1) [Saldo],	
+T5.PrcCode,	
+T5.PrcName,	
+T0.TransCode,	
+CASE ISNULL(T1.ProfitCode,T5.U_EXD_UNINEG)	
+WHEN '' THEN 'HOR'	
+ELSE ISNULL(T1.ProfitCode,T5.U_EXD_UNINEG)	
+END as 'U_EXD_UNINEG'	
+FROM OJDT T0	
+INNER JOIN JDT1 T1 ON T1.TransId=T0.TransId	
+INNER JOIN OACT T2 ON T2.AcctCode=T1.Account	
+LEFT JOIN [dbo].[OOCR] T3 ON T3.OcrCode = T1.OcrCode3	
+LEFT JOIN [dbo].[OCR1] T4 ON T4.OcrCode = T3.OcrCode	
+LEFT JOIN [dbo].[OPRC] T5 ON T5.PrcCode = T4.PrcCode	
+WHERE LEFT(T2.Segment_0,1) IN ('6')	
+AND T2.AcctCode IN (	
+SELECT	
+t10.AcctCode                                                         FROM OFRC T9	
+INNER JOIN FRC1 T10 ON T10.TemplateId=T9.TemplateId	
+WHERE T9.Name LIKE '%Ejecutado%'	
+)	
+AND (t1.Debit-t1.Credit)<>0	
+AND T0.RefDate>=@FINICIO	
+AND T1.RefDate<=@FFIN	
+AND T0.TransType NOT IN (-3,-2)	
+)T11	
+where T11.Cultivo='NO ASIGNADO'	
+--AND T11.TransCode <>'RCC'	
+group by T11.SYSCODE,T11.Cuenta,T11.PrcCode,T11.U_EXD_UNINEG,T11.PrcName,t11.[Nombre Cuenta]	
+HAVING SUM(T11.[Saldo])<>0	
+) T12	
+group by	
+T12.Periodo,	
+T12.PrcCode,	
+T12.PrcName,	
+T12.Cuenta,	
+t12.[Nombre Cuenta],	
+t12.U_EXD_UNINEG	
+HAVING SUM(T12.[Saldo])<>0	
+ORDER BY 7,2,4	
+	
+END	

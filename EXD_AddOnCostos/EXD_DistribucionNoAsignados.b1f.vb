@@ -320,103 +320,108 @@ Namespace EXD_AddOnCostos
             oJournalEntries.TransactionCode = "RCC"
             oJournalEntries.UserFields.Fields.Item("U_EXX_TIPCON").Value = "1"
 
+            Try
+                Dim oProgressBar As SAPbouiCOM.ProgressBar = Nothing
+                oProgressBar = SBO_Application.StatusBar.CreateProgressBar("Procesando...", 17, True)
+                oProgressBar.Value = 0
 
-            Dim oProgressBar As SAPbouiCOM.ProgressBar = Nothing
-            oProgressBar = SBO_Application.StatusBar.CreateProgressBar("Procesando...", 17, True)
-            oProgressBar.Value = 0
+                For n As Integer = 1 To Me.MATRIX.RowCount
 
-            For n As Integer = 1 To Me.MATRIX.RowCount
+                    oProgressBar.Value = oProgressBar.Value + 1
+                    oProgressBar.Text = "Procesando " + n.ToString() + " de " + Me.MATRIX.RowCount.ToString()
 
-                oProgressBar.Value = oProgressBar.Value + 1
-                oProgressBar.Text = "Procesando " + n.ToString() + " de " + Me.MATRIX.RowCount.ToString()
+                    'Procesamos solo las lineas marcadas
+                    If CType(Me.MATRIX.Columns.Item("Col_0").Cells.Item(n).Specific, SAPbouiCOM.CheckBox).Checked = True Then
 
-                'Procesamos solo las lineas marcadas
-                If CType(Me.MATRIX.Columns.Item("Col_0").Cells.Item(n).Specific, SAPbouiCOM.CheckBox).Checked = True Then
+                        doDebe = CType(Me.MATRIX.Columns.Item("Col_5").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                        doHaber = CType(Me.MATRIX.Columns.Item("Col_6").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
 
-                    doDebe = CType(Me.MATRIX.Columns.Item("Col_5").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
-                    doHaber = CType(Me.MATRIX.Columns.Item("Col_6").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                        If doDebe = 0.0 And doHaber = 0.0 Then
+                            'NO SE DEBE PROCESAR
+                        Else
+                            If doDebe > 0 Then
+                                oJournalEntries.Lines.AccountCode = CType(Me.MATRIX.Columns.Item("Col_1").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                                oJournalEntries.Lines.Debit = doDebe '(doDebe / 1000)
+                                oJournalEntries.Lines.CostingCode = CType(Me.MATRIX.Columns.Item("Col_7").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
 
-                    If doDebe = 0.0 And doHaber = 0.0 Then
-                        'NO SE DEBE PROCESAR
-                    Else
-                        If doDebe > 0 Then
-                            oJournalEntries.Lines.AccountCode = CType(Me.MATRIX.Columns.Item("Col_1").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
-                            oJournalEntries.Lines.Debit = doDebe '(doDebe / 1000)
-                            oJournalEntries.Lines.CostingCode = CType(Me.MATRIX.Columns.Item("Col_7").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                                If CType(Me.MATRIX.Columns.Item("Col_3").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
+                                    oJournalEntries.Lines.CostingCode3 = CType(Me.MATRIX.Columns.Item("Col_3").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                                End If
 
-                            If CType(Me.MATRIX.Columns.Item("Col_3").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
-                                oJournalEntries.Lines.CostingCode3 = CType(Me.MATRIX.Columns.Item("Col_3").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                                'nuevo 202203
+
+                                'If CType(Me.MATRIX.Columns.Item("Col_9").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
+                                '    oJournalEntries.Lines.CostingCode2 = CType(Me.MATRIX.Columns.Item("Col_9").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                                'End If
+                                'If CType(Me.MATRIX.Columns.Item("Col_10").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
+                                '    oJournalEntries.Lines.CostingCode4 = CType(Me.MATRIX.Columns.Item("Col_10").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                                'End If
+                                'If CType(Me.MATRIX.Columns.Item("Col_11").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
+                                '    oJournalEntries.Lines.CostingCode5 = CType(Me.MATRIX.Columns.Item("Col_11").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                                'End If
+
+                                oJournalEntries.Lines.Add()
+
                             End If
 
-                            'nuevo 202203
+                            If doHaber > 0 Then
+                                oJournalEntries.Lines.AccountCode = CType(Me.MATRIX.Columns.Item("Col_1").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                                oJournalEntries.Lines.Credit = doHaber '(doHaber / 1000)
+                                oJournalEntries.Lines.CostingCode = CType(Me.MATRIX.Columns.Item("Col_7").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
 
-                            'If CType(Me.MATRIX.Columns.Item("Col_9").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
-                            '    oJournalEntries.Lines.CostingCode2 = CType(Me.MATRIX.Columns.Item("Col_9").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
-                            'End If
-                            'If CType(Me.MATRIX.Columns.Item("Col_10").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
-                            '    oJournalEntries.Lines.CostingCode4 = CType(Me.MATRIX.Columns.Item("Col_10").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
-                            'End If
-                            'If CType(Me.MATRIX.Columns.Item("Col_11").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
-                            '    oJournalEntries.Lines.CostingCode5 = CType(Me.MATRIX.Columns.Item("Col_11").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
-                            'End If
+                                If CType(Me.MATRIX.Columns.Item("Col_3").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
+                                    oJournalEntries.Lines.CostingCode3 = CType(Me.MATRIX.Columns.Item("Col_3").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                                End If
 
-                            oJournalEntries.Lines.Add()
+                                'nuevo 202203
 
-                        End If
+                                'If CType(Me.MATRIX.Columns.Item("Col_9").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
+                                '    oJournalEntries.Lines.CostingCode2 = CType(Me.MATRIX.Columns.Item("Col_9").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                                'End If
+                                'If CType(Me.MATRIX.Columns.Item("Col_10").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
+                                '    oJournalEntries.Lines.CostingCode4 = CType(Me.MATRIX.Columns.Item("Col_10").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                                'End If
+                                'If CType(Me.MATRIX.Columns.Item("Col_11").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
+                                '    oJournalEntries.Lines.CostingCode5 = CType(Me.MATRIX.Columns.Item("Col_11").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                                'End If
 
-                        If doHaber > 0 Then
-                            oJournalEntries.Lines.AccountCode = CType(Me.MATRIX.Columns.Item("Col_1").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
-                            oJournalEntries.Lines.Credit = doHaber '(doHaber / 1000)
-                            oJournalEntries.Lines.CostingCode = CType(Me.MATRIX.Columns.Item("Col_7").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
+                                oJournalEntries.Lines.Add()
 
-                            If CType(Me.MATRIX.Columns.Item("Col_3").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
-                                oJournalEntries.Lines.CostingCode3 = CType(Me.MATRIX.Columns.Item("Col_3").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
                             End If
 
-                            'nuevo 202203
 
-                            'If CType(Me.MATRIX.Columns.Item("Col_9").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
-                            '    oJournalEntries.Lines.CostingCode2 = CType(Me.MATRIX.Columns.Item("Col_9").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
-                            'End If
-                            'If CType(Me.MATRIX.Columns.Item("Col_10").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
-                            '    oJournalEntries.Lines.CostingCode4 = CType(Me.MATRIX.Columns.Item("Col_10").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
-                            'End If
-                            'If CType(Me.MATRIX.Columns.Item("Col_11").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value.Trim() <> "" Then
-                            '    oJournalEntries.Lines.CostingCode5 = CType(Me.MATRIX.Columns.Item("Col_11").Cells.Item(n).Specific, SAPbouiCOM.EditText).Value
-                            'End If
-
-                            oJournalEntries.Lines.Add()
 
                         End If
-
-
-
+                        Console.WriteLine("Procesando " + n.ToString() + " de " + Me.MATRIX.RowCount.ToString())
                     End If
-                    Console.WriteLine("Procesando " + n.ToString() + " de " + Me.MATRIX.RowCount.ToString())
-                End If
-            Next
+                Next
 
 
 
-            CodeMethod = oJournalEntries.Add
+                CodeMethod = oJournalEntries.Add
 
-            oProgressBar.Stop()
-
-            If Not oProgressBar Is Nothing Then
                 oProgressBar.Stop()
-            End If
+
+                If Not oProgressBar Is Nothing Then
+                    oProgressBar.Stop()
+                End If
 
 
-            If CodeMethod <> 0 Then
-                SBO_Company.GetLastError(ErrorCode, ErrorMsg)
-                Application.SBO_Application.SetStatusBarMessage(ErrorCode.ToString() + " : " + ErrorMsg, SAPbouiCOM.BoMessageTime.bmt_Short, True)
-            Else
-                Application.SBO_Application.SetStatusBarMessage("Proceso completado con exito", SAPbouiCOM.BoMessageTime.bmt_Short, False)
-                'cargarGrilla(DT_FECHA_INICIO.Value, DT_FECHA_FIN.Value)
+                If CodeMethod <> 0 Then
+                    SBO_Company.GetLastError(ErrorCode, ErrorMsg)
+                    Application.SBO_Application.SetStatusBarMessage(ErrorCode.ToString() + " : " + ErrorMsg, SAPbouiCOM.BoMessageTime.bmt_Short, True)
+                Else
+                    Application.SBO_Application.SetStatusBarMessage("Proceso completado con exito", SAPbouiCOM.BoMessageTime.bmt_Short, False)
+                    'cargarGrilla(DT_FECHA_INICIO.Value, DT_FECHA_FIN.Value)
 
-                MATRIX.Clear()
+                    MATRIX.Clear()
 
-            End If
+                End If
+
+            Catch ex As Exception
+                Application.SBO_Application.SetStatusBarMessage("Error al cargar" + ex.Message + " ", SAPbouiCOM.BoMessageTime.bmt_Short, True)
+                Application.SBO_Application.SetStatusBarMessage(ex.StackTrace + " ", SAPbouiCOM.BoMessageTime.bmt_Short, True)
+            End Try
 
 
 
@@ -494,7 +499,7 @@ Namespace EXD_AddOnCostos
 
             oCompService = SBO_Company.GetCompanyService()
             SBO_Company.StartTransaction()
-            oGeneralService = oCompService.GetGeneralService("EXT_NOASIGNADO")
+            oGeneralService = oCompService.GetGeneralService("EXD_NOASIGNADO")
             oGeneralData = oGeneralService.GetDataInterface(GeneralServiceDataInterfaces.gsGeneralData)
 
 
@@ -522,16 +527,17 @@ Namespace EXD_AddOnCostos
 
                     'Setting Data to Child Table Fields
 
-                    oChildren = oGeneralData.Child("EXT_DETDIC")
+                    oChildren = oGeneralData.Child("EXD_DETDIC")
                     oChild = oChildren.Add()
 
-                    oChild.SetProperty("U_EXT_CODCC", PrcCode)
-                    oChild.SetProperty("U_EXT_NOMCC", PrcName)
-                    oChild.SetProperty("U_EXT_CUECON", Cuenta)
-                    oChild.SetProperty("U_EXT_NOMCUE", NombreCuenta)
-                    oChild.SetProperty("U_EXT_SALDO", Saldo)
-                    oChild.SetProperty("U_EXT_TIPDIS", distribucion)
-                    oChild.SetProperty("U_EXT_UNINEG", unidadNegocio)
+
+                    oChild.SetProperty("U_EXD_CODCC", PrcCode)
+                    oChild.SetProperty("U_EXD_NOMCC", PrcName)
+                    oChild.SetProperty("U_EXD_CUECON", Cuenta)
+                    oChild.SetProperty("U_EXD_NOMCUE", NombreCuenta)
+                    oChild.SetProperty("U_EXD_SALDO", Saldo)
+                    oChild.SetProperty("U_EXD_TIPDIS", distribucion)
+                    oChild.SetProperty("U_EXD_UNINEG", unidadNegocio)
                     'nuevo 202203
                     'oChild.SetProperty("U_EXT_DIM1", Dimension1)
                     'oChild.SetProperty("U_EXT_DIM2", Dimension2)

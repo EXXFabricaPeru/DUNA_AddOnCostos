@@ -228,6 +228,8 @@
   </ItemGroup>
   <ItemGroup />
   <ItemGroup>
+    <EmbeddedResource Include="recursos\sql\EXD_ANALISIS_EJECUTADO_REAL_DISTRIBUCION_CIF_310118.txt" />
+    <Content Include="recursos\sql\EXD_TABLA_NO_ASIGNADOS.txt" />
     <Content Include="recursos\sql\SP_CURSOR_MOVIMIENTO.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
