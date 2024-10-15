@@ -1,312 +1,337 @@
-       
--- EXD_ANALISIS_EJECUTADO_REAL  '20180901','20180930'      
+  
+         
+ --EXD_ANALISIS_EJECUTADO_REAL  '20190101','20190331'  
+                            
+CREATE PROCEDURE [dbo].[EXD_ANALISIS_EJECUTADO_REAL]                                                                      
+@FINICIO DATETIME,                                                                      
+@FFIN DATETIME                                                                                    
+AS                                                                      
+BEGIN                                                                      
+         
+/* CREACION SOLO LA PRIMERA VEZ */  
+                                 
+--CREATE TABLE TABLE_0                            
+--(                            
+--seleccionar nvarchar(5),                            
+--nroAsiento decimal(18,6),                            
+--nroLinea decimal (18,6),                            
+--FContabilizacion date,                            
+--elementoCosto nvarchar(100),                            
+--cuenta nvarchar(20),                            
+--nombreCuenta nvarchar(150),                            
+--cultivo nvarchar(100),                            
+--codigoCC nvarchar(50),                            
+--nombreCC nvarchar(150),                            
+--Campania nvarchar(50),                            
+--saldo decimal(18,6),                            
+--tipo nvarchar(20),                            
+--data nvarchar(50)                            
+--)                                     
+        
+ TRUNCATE TABLE TABLE_0;  
                           
-ALTER PROCEDURE [dbo].[EXD_ANALISIS_EJECUTADO_REAL]                                                                    
-@FINICIO DATETIME,                                                                    
-@FFIN DATETIME                                                                                  
-AS                                                                    
-BEGIN                                                                    
-       
-/* CREACION SOLO LA PRIMERA VEZ */
-	                              
---CREATE TABLE TABLE_0                          
---(                          
---seleccionar nvarchar(5),                          
---nroAsiento decimal(18,6),                          
---nroLinea decimal (18,6),                          
---FContabilizacion date,                          
---elementoCosto nvarchar(100),                          
---cuenta nvarchar(20),                          
---nombreCuenta nvarchar(150),                          
---cultivo nvarchar(100),                          
---codigoCC nvarchar(50),                          
---nombreCC nvarchar(150),                          
---Campania nvarchar(50),                          
---saldo decimal(18,6),                          
---tipo nvarchar(20),                          
---data nvarchar(50)                          
---)                                   
-      
- TRUNCATE TABLE TABLE_0;
-                        
-insert into  TABLE_0                                                          
-SELECT                              
-'0' Seleccionar,                                                                              
-T1.TransId [Nro asiento],                                                                        
-t1.Line_ID [Nro Linea],                                                                        
-t1.RefDate [Fecha Contabilizacion],                                                                        
-CASE ISNULL(T2.Details,'')         
-WHEN '' THEN              
- CASE T0.TransCode                                                                            
-  WHEN 'TRC' THEN 'MATERIALES'                                                                            
-  WHEN 'RCC' THEN 'CIF'                                                              
-  ELSE                                                                           
-  CASE LEFT(T2.SEGMENT_0,2)                                                                                  
-   WHEN '62' THEN 'MANO DE OBRA'                                                                                  
-   WHEN '61' THEN 'MATERIALES'    
- --  (                                                                              
- --CASE (ISNULL((CASE t0.TransType                                                                                
- --   when '60' then                                                           
- --   ((SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                                                
- --   when '59' then ((SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                                                
- --   WHEN '202' THEN '1234'                                                                              
- --   END                                                                                
- --  ),'0000'))                                                                              
- --  WHEN '0000' THEN 'CIF'                                                                              
- --  ELSE 'MATERIALES'                                                                              
- -- END                                                                              
- --  )   
-   ELSE 'CIF'                                                                                  
-  END                                            
-  END               
-ELSE UPPER(T2.Details)              
-END              
-[Elemento de Costo],                                                                                                                                             
-T2.Segment_0+'-'+T2.Segment_1+'-'+T2.Segment_2 [Cuenta],                                                                        
-t2.AcctName [Nombre Cuenta],          
-ISNULL(t3.U_EXD_NOMLINEA,                                                                              
-ISNULL((SELECT T9.U_EXD_NOMLINEA FROM OPRC T9 WHERE T9.PrcCode=ISNULL(T5.PrcCode,'ABC'                                                             
- --(CASE t0.TransType                                                              
- -- when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry                            
- --      WHERE T6.TransId=T0.TransId))                                                              
- -- when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry                                                   
- --      WHERE T6.TransId=T0.TransId))                                                  
- -- WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)            
- -- WHEN '30' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE cast(T5.DocNum as nvarchar(64))=T0.Ref1) -- Cuando se usa el campo de fecha de cierre diferente al de SAP            
- -- END                                                              
- --)                                                  
- )),'NO ASIGNADO')                                              
- )                                              
- [Cultivo],                                                                                                  
---ISNULL(T5.PrcCode,                                                                      
---(CASE t0.TransType                                                                      
--- when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=                                                          
---  (SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                                      
+insert into  TABLE_0                                                            
+SELECT                                
+'0' Seleccionar,                                                                                
+T1.TransId [Nro asiento],                                                                          
+t1.Line_ID [Nro Linea],                                                                          
+t1.RefDate [Fecha Contabilizacion],                                                                          
+CASE ISNULL(T2.Details,'')           
+WHEN '' THEN                
+ CASE T0.TransCode                                                                              
+  WHEN 'TRC' THEN 'MATERIALES'                                                                              
+  WHEN 'RCC' THEN 'CIF'                                                                
+  ELSE                                                                             
+  CASE LEFT(T2.SEGMENT_0,2)                                                                                    
+   WHEN '62' THEN 'MANO DE OBRA'                                                                                    
+   WHEN '61' THEN 'MATERIALES'      
+ --  (                                                                                
+ --CASE (ISNULL((CASE t0.TransType                                                                                  
+ --   when '60' then                                                             
+ --   ((SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                                                  
+ --   when '59' then ((SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                                                  
+ --   WHEN '202' THEN '1234'                                                                                
+ --   END                                                                                  
+ --  ),'0000'))                                                                                
+ --  WHEN '0000' THEN 'CIF'                                                                                
+ --  ELSE 'MATERIALES'                                                                                
+ -- END                                                                          
+ --  )     
+   ELSE 'CIF'                                                                                    
+  END                                              
+  END                 
+ELSE UPPER(T2.Details)                
+END                
+[Elemento de Costo],                                                                                                                                               
+T2.Segment_0+'-'+T2.Segment_1+'-'+T2.Segment_2 [Cuenta],                                                                          
+t2.AcctName [Nombre Cuenta],            
+ISNULL(t3.U_EXD_NOMLINEA,                                                                                
+ISNULL((SELECT T9.U_EXD_NOMLINEA FROM OPRC T9 WHERE T9.PrcCode=ISNULL(T5.PrcCode,'ABC'                                                               
+ --(CASE t0.TransType                                                                
+ -- when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry                              
+ --      WHERE T6.TransId=T0.TransId))                                                                
+ -- when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry                                                     
+ --      WHERE T6.TransId=T0.TransId))                                                    
+ -- WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)              
+ -- WHEN '30' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE cast(T5.DocNum as nvarchar(64))=T0.Ref1) -- Cuando se usa el campo de fecha de cierre diferente al de SAP              
+ -- END                                                                
+ --)                                                    
+ )),'NO ASIGNADO')                                                
+ )                                                
+ [Cultivo],                                                                                                    
+--ISNULL(T5.PrcCode,                                                                        
+--(CASE t0.TransType                                                                        
+-- when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=                                                            
+--  (SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                                        
 -- when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                                 
   
-     
--- WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                                           
--- END                                                                      
---)                                                                      
---)     
-T5.PrcCode [Codigo Centro de Costo],                                                                        
---ISNULL(T5.PrcName,                                                                      
---(SELECT T4.PrcName FROM OPRC T4 WHERE T4.PrcCode=(CASE t0.TransType                                                                      
+    
+       
+-- WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                                             
+-- END                                                                        
+--)                                                                        
+--)       
+T5.PrcCode [Codigo Centro de Costo],                                                                          
+--ISNULL(T5.PrcName,                                                                        
+--(SELECT T4.PrcName FROM OPRC T4 WHERE T4.PrcCode=(CASE t0.TransType                                                                        
 -- when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                                  
   
     
--- when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                
--- WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                                           
--- END                                                 
---))                        
---)     
-T5.PrcName [Nombre Centro de Costo],                                                                        
-ISNULL((ISNULL(((CASE t0.TransType       
- when '60' then ISNULL(T0.U_EXD_CAMPAN,'')    
-  --(SELECT T5.U_EXD_CAMPAN FROM OWOR T5     
-  --  WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0))     
-  --      FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry     
-  --      WHERE T6.TransId=T0.TransId))    
- when '59' then T0.U_EXD_CAMPAN    
-    --(SELECT T5.U_EXD_CAMPAN FROM OWOR T5     
-    --WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0))     
-    --    FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry     
-    --    WHERE T6.TransId=T0.TransId))    
- WHEN '202' THEN (SELECT T5.U_EXD_CAMPAN FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)    
- END                                                                      
-))    
-,     
-(SELECT  TOP 1  ISNULL(T9.U_EXD_CAMPANIA,'NO ASIGNADO') FROM OPRJ T9 WHERE T1.RefDate BETWEEN T9.ValidFrom AND T9.ValidTo AND T9.U_EXD_CODART=                                                                        
-ISNULL((SELECT MAX(ISNULL(T9.U_EXD_LINEA,0)) FROM OPRC T9 WHERE T9.PrcCode=ISNULL(T5.PrcCode,'AA'    
---(CASE t0.TransType                                                                      
--- when '60' then (SELECT  TOP 1  T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                          
- 
-       
       
+-- when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                  
+-- WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                                             
+-- END                                                   
+--))                          
+--)       
+T5.PrcName [Nombre Centro de Costo],                                                                          
+ISNULL((ISNULL(((CASE t0.TransType         
+ when '60' then ISNULL(T0.U_EXD_CAMPAN,'')      
+  --(SELECT T5.U_EXD_CAMPAN FROM OWOR T5       
+  --  WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0))       
+  --      FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry       
+  --      WHERE T6.TransId=T0.TransId))      
+ when '59' then T0.U_EXD_CAMPAN      
+    --(SELECT T5.U_EXD_CAMPAN FROM OWOR T5       
+    --WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0))       
+    --    FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry       
+    --    WHERE T6.TransId=T0.TransId))      
+ WHEN '202' THEN (SELECT T5.U_EXD_CAMPAN FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)      
+ END                                                                        
+))      
+,       
+(SELECT  TOP 1  ISNULL(T9.U_EXD_CAMPANIA,'NO ASIGNADO') FROM OPRJ T9 WHERE T1.RefDate BETWEEN T9.ValidFrom AND T9.ValidTo AND T9.U_EXD_CODART=                                                                          
+ISNULL((SELECT MAX(ISNULL(T9.U_EXD_LINEA,0)) FROM OPRC T9 WHERE T9.PrcCode=ISNULL(T5.PrcCode,'AA'      
+--(CASE t0.TransType                                                                        
+-- when '60' then (SELECT  TOP 1  T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                          
+  
+   
+         
         
           
+            
 -- when '59' then (SELECT  TOP 1  T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                          
   
-      
--- WHEN '202' THEN (SELECT TOP 1 T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                                             
--- END                        
---)                                                                      
-)),'NO ASIGNADO')))),'') [Campaña],                                                              
-(t1.Debit-t1.Credit)*ISNULL((t4.PrcAmount/t4.OcrTotal),1) [Saldo],                      
-'Real' [Tipo] ,                                  
--- AGREGADO POR ACM                                  
-'SAP LINEA' [DATA]                                                                        
-FROM OJDT T0                                                                        
-INNER JOIN JDT1 T1 ON T1.TransId=T0.TransId                                                                        
-INNER JOIN OACT T2 ON T2.AcctCode=T1.Account                                                  
-LEFT JOIN [dbo].[OOCR] T3 ON T3.OcrCode = T1.OcrCode3                                
-LEFT JOIN [dbo].[OCR1] T4 ON T4.OcrCode = T3.OcrCode                                
-LEFT JOIN [dbo].[OPRC] T5 ON T5.PrcCode = T4.PrcCode                                 
-WHERE LEFT(T2.Segment_0,1) IN ('6')                                                                 
-AND T2.AcctCode IN (                                                                        
-     SELECT                                                                         
-     t10.AcctCode                                                              
-     FROM OFRC T9                                                                         
-     INNER JOIN FRC1 T10 ON T10.TemplateId=T9.TemplateId                                                                        
-     WHERE T9.Name LIKE '%Ejecutado%'                                                                        
-     )                                                                        
-AND (t1.Debit-t1.Credit)<>0                                                          
-AND T0.RefDate>= '20180801'  
-AND T0.RefDate<= @FFIN    
-AND T0.TransType NOT IN (-3,-2)                                                 
-                                     
-----------------------                                                              
-UNION                                                               
-----------------------                                          
-                                                                      
-SELECT              
-'0' Seleccionar,                                                                    
-T1.TransId [Nro asiento],                                                                        
-t1.Line_ID [Nro Linea],                                                                        
-t1.RefDate [Fecha Contabilizacion],                                                 
-CASE ISNULL(T2.Details,'')         
-WHEN '' THEN              
- CASE T0.TransCode                                                                            
-  WHEN 'TRC' THEN 'MATERIALES'                                                                            
-  WHEN 'RCC' THEN 'CIF'                                                              
-  ELSE                                                                           
-  CASE LEFT(T2.SEGMENT_0,2)                                                                                  
-   WHEN '62' THEN 'MANO DE OBRA'                                                                                  
-   WHEN '61' THEN (                                                                              
-  CASE (ISNULL((CASE t0.TransType                                                                                
-    when '60' then                                                           
-    ((SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                                                
-    when '59' then ((SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                                                
-    WHEN '202' THEN '1234'                                                                              
-    END                                                                                
-   ),'0000'))                                                                              
-   WHEN '0000' THEN 'CIF'                                                                              
-   ELSE 'MATERIALES'                                                                              
-  END                                                                              
-   )                                                                            
-   ELSE 'CIF'                                                                                  
-  END                                                       
-  END               
-ELSE UPPER(T2.Details) END [Elemento de Costo],                                                                        
-T2.Segment_0+'-'+T2.Segment_1+'-'+T2.Segment_2 [Cuenta],                                                                        
-t2.AcctName [Nombre Cuenta],                                                                        
-ISNULL(t3.U_EXD_NOMLINEA, ISNULL((SELECT ISNULL(T9.U_EXD_NOMLINEA,'NO ASIGNADO') FROM OPRC T9 WHERE T9.PrcCode=ISNULL((CASE t0.TransType                                                                      
-  when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry                                                           
-       WHERE T6.TransId=T0.TransId))                                                                      
-  when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry                                                           
-       WHERE T6.TransId=T0.TransId))                                                          
-  WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                                           
-  WHEN '30' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.Ref1)                                           
-  END                                                                      
- ),T1.OcrCode3                                            
- )),'NO ASIGNADO')                                                      
-) [Cultivo],                                                    
-(ISNULL((SELECT T10.OcrCode3 FROM OWOR T10 WHERE cast(T10.DocNum as nvarchar(16)) IN                                                                        
-  (CASE T0.TransType                                                                        
-   WHEN '59' THEN (SELECT ISNULL(max(ISNULL(T5.BaseRef,0)),'00') FROM OIGN T4 INNER JOIN IGN1 T5 ON T5.DocEntry=T4.DocEntry WHERE T4.TransId=T0.TransId)                                                                        
-   WHEN '60' THEN (SELECT ISNULL(max(ISNULL(T5.BaseRef,0)),'00') FROM OIGE T4 INNER JOIN IGE1 T5 ON T5.DocEntry=T4.DocEntry WHERE T4.TransId=T0.TransId)                                                                           
- WHEN '202' THEN T0.BaseRef                                                                  
-   WHEN '162' THEN T0.Ref2                                            
+    
+        
+-- WHEN '202' THEN (SELECT TOP 1 T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                                               
+-- END                          
+--)                                                                        
+)),'NO ASIGNADO')))),'') [Campaña],                                                                
+(t1.Debit-t1.Credit)*ISNULL((t4.PrcAmount/t4.OcrTotal),1) [Saldo],                        
+'Real' [Tipo] ,                                    
+-- AGREGADO POR ACM                                    
+'SAP LINEA' [DATA]                                                                          
+FROM OJDT T0                                                                          
+INNER JOIN JDT1 T1 ON T1.TransId=T0.TransId                                                                          
+INNER JOIN OACT T2 ON T2.AcctCode=T1.Account                                                    
+LEFT JOIN [dbo].[OOCR] T3 ON T3.OcrCode = T1.OcrCode3                                  
+LEFT JOIN [dbo].[OCR1] T4 ON T4.OcrCode = T3.OcrCode                                  
+LEFT JOIN [dbo].[OPRC] T5 ON T5.PrcCode = T4.PrcCode                                   
+WHERE LEFT(T2.Segment_0,1) IN ('6')                                                                   
+AND T2.AcctCode IN (                                                                          
+     SELECT                                                                           
+     t10.AcctCode                                                                
+     FROM OFRC T9                                                                           
+     INNER JOIN FRC1 T10 ON T10.TemplateId=T9.TemplateId                                                                          
+     WHERE T9.Name LIKE '%Ejecutado%'                                                                          
+     )                                                                          
+AND (t1.Debit-t1.Credit)<>0                                                            
+AND T0.RefDate>= @FINICIO  
+AND T0.RefDate<= @FFIN      
+AND T0.TransType NOT IN (-3,-2)                                                   
+                                       
+----------------------                                                                
+UNION                                                                 
+----------------------                                            
+                                                                        
+SELECT                
+'0' Seleccionar,                                                                      
+T1.TransId [Nro asiento],                                                                          
+t1.Line_ID [Nro Linea],                                                                          
+t1.RefDate [Fecha Contabilizacion],                                                   
+CASE ISNULL(T2.Details,'')           
+WHEN '' THEN                
+ CASE T0.TransCode                                                                              
+  WHEN 'TRC' THEN 'MATERIALES'                                                                              
+  WHEN 'RCC' THEN 'CIF'                                                                
+  ELSE                                                                             
+  CASE LEFT(T2.SEGMENT_0,2)                                                                                    
+   WHEN '62' THEN 'MANO DE OBRA'                                                                                    
+   WHEN '61' THEN (                                                                                
+  CASE (ISNULL((CASE t0.TransType                                                                                  
+    when '60' then                                                             
+    ((SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                                                  
+    when '59' then ((SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry WHERE T6.TransId=T0.TransId))                                                                                  
+    WHEN '202' THEN '1234'                                                                                
+    END                                                                                  
+   ),'0000'))                                                                                
+   WHEN '0000' THEN 'CIF'                                                                                
+   ELSE 'MATERIALES'                                                                                
+  END                                                                                
+   )                                                                              
+   ELSE 'CIF'                                                                                    
+  END                                                         
+  END                 
+ELSE UPPER(T2.Details) END [Elemento de Costo],                                                                          
+T2.Segment_0+'-'+T2.Segment_1+'-'+T2.Segment_2 [Cuenta],                                                                          
+t2.AcctName [Nombre Cuenta],                                                                          
+ISNULL(t3.U_EXD_NOMLINEA, ISNULL((SELECT ISNULL(T9.U_EXD_NOMLINEA,'NO ASIGNADO') FROM OPRC T9 WHERE T9.PrcCode=ISNULL((CASE t0.TransType                                                                        
+  when '60' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGE T6 INNER JOIN IGE1 T7 ON T7.DocEntry=T6.DocEntry                                                             
+       WHERE T6.TransId=T0.TransId))                                                                        
+  when '59' then (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=(SELECT MAX(ISNULL(T7.BaseRef,0)) FROM OIGN T6 INNER JOIN IGN1 T7 ON T7.DocEntry=T6.DocEntry                                                             
+       WHERE T6.TransId=T0.TransId))                                                            
+  WHEN '202' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.BaseRef)                                             
+  WHEN '30' THEN (SELECT T5.OcrCode3 FROM OWOR T5 WHERE T5.DocNum=T0.Ref1)                                             
   END                                                                        
-)),T1.OcrCode3)) [Codigo Centro de Costo],                                                                        
-(SELECT T99.PrcName FROM OPRC T99 WHERE T99.PrcCode=(ISNULL((SELECT T10.OcrCode3 FROM OWOR T10 WHERE cast(T10.DocNum as nvarchar(16)) IN                                                                        
-  (CASE T0.TransType                                                                        
-   WHEN '59' THEN (SELECT ISNULL(max(ISNULL(T5.BaseRef,0)),'00') FROM OIGN T4 INNER JOIN IGN1 T5 ON T5.DocEntry=T4.DocEntry WHERE T4.TransId=T0.TransId)                                                                        
-   WHEN '60' THEN (SELECT ISNULL(max(ISNULL(T5.BaseRef,0)),'00') FROM OIGE T4 INNER JOIN IGE1 T5 ON T5.DocEntry=T4.DocEntry WHERE T4.TransId=T0.TransId)                                                                           
-   WHEN '202' THEN T0.BaseRef                            
-   WHEN '162' THEN T0.Ref2                                            
-  END                                                                   
-)),T1.OcrCode3))) [Nombre Centro de Costo],                                
-                                
-ISNULL((CASE T0.TransType                                                                 
- WHEN '30' THEN                                                               
- ISNULL((SELECT TOP 1 ISNULL(T9.U_EXD_CAMPANIA,'NO ASIGNADO') FROM OPRJ T9 WHERE T1.RefDate BETWEEN T9.ValidFrom AND T9.ValidTo                                                               
- AND T9.U_EXD_CODART=T3.U_EXD_Linea),(SELECT TOP 1 T67.U_EXD_CAMPAN FROM OWOR T67 WHERE T67.DocNum=T0.Ref1))                      
- ELSE                        
-  (ISNULL((SELECT TOP 1 T10.U_EXD_CAMPAN FROM OWOR T10 WHERE cast(T10.DocNum as nvarchar(16)) IN                                                                        
-    (CASE T0.TransType                                              
-     WHEN '59' THEN (SELECT ISNULL(max(ISNULL(T5.BaseRef,0)),'00') FROM OIGN T4 INNER JOIN IGN1 T5 ON T5.DocEntry=T4.DocEntry WHERE T4.TransId=T0.TransId)                                    
-     WHEN '60' THEN (SELECT ISNULL(max(ISNULL(T5.BaseRef,0)),'00') FROM OIGE T4 INNER JOIN IGE1 T5 ON T5.DocEntry=T4.DocEntry WHERE T4.TransId=T0.TransId)                    
-     WHEN '202' THEN T0.BaseRef                
-     WHEN '162' THEN T0.Ref2                                     
-     ELSE '00'                                                                        
-    END))                                                              
-  ,ISNULL((SELECT TOP 1 ISNULL(T9.U_EXD_CAMPANIA,'NO ASIGNADO') FROM OPRJ T9 WHERE T1.RefDate BETWEEN T9.ValidFrom AND T9.ValidTo                                              
-    AND T9.U_EXD_CODART=T3.U_EXD_Linea),'NO ASIGNADO')))                        
-END),'') [Campaña],                                                                        
-(t1.Debit-t1.Credit)*ISNULL((t4.PrcAmount/t4.OcrTotal),1) [Saldo],                                                                            
-'Ejecutado' [Tipo] ,                                  
--- AGREGADO POR ACM                                  
-'SAP LINEA' [DATA]                                                     
-FROM OJDT T0                                                                        
-INNER JOIN JDT1 T1 ON T1.TransId=T0.TransId                                     
-INNER JOIN OACT T2 ON T2.AcctCode=T1.Account                                 
-LEFT JOIN [dbo].[OOCR] T3 ON T3.OcrCode = T1.OcrCode3                                
-LEFT JOIN [dbo].[OCR1] T4 ON T4.OcrCode = T3.OcrCode                                
-LEFT JOIN [dbo].[OPRC] T5 ON T5.PrcCode = T4.PrcCode                                                 
-WHERE LEFT(T2.Segment_0,1) IN ('7')                                                   
-AND T2.AcctCode IN (                                                                        
-     SELECT                                                                         
-     t10.AcctCode                                                                        
-     FROM OFRC T9                                                                         
-     INNER JOIN FRC1 T10 ON T10.TemplateId=T9.TemplateId                                                                        
-     WHERE T9.Name LIKE '%Ejecutado%'                                                                        
-     )                                                                        
-AND (t1.Debit-t1.Credit)<>0                                          
-AND T0.RefDate>= '20180801'    
-AND T0.RefDate<= @FFIN                                                                                                                  
-AND T0.TransType NOT IN (-3,-2)                                             
-                               
-                                    
-UNION                                    
-                                    
-SELECT                    
-'0' Seleccionar,                                 
-T9.U_EXD_Asiento,                                    
-T9.U_EXD_NroLinea,                                    
-T9.U_EXD_FECCON,                                    
-T9.U_EXD_ELECOS,                                    
-T9.U_EXD_Cuenta,                                    
-T9.U_EXD_NOMCUE,                                    
-T9.U_EXD_CULTIVO,                                   
-T9.U_EXD_CODCC,                                    
-T9.U_EXD_NOMCC,                                    
-ISNULL(T9.U_EXD_CAMPANIA,''),                                    
-T9.U_EXD_SALDO,                                    
-T9.U_EXD_TIPO,                                  
--- AGREGADO POR ACM                                  
-'TABLA COSTO'                                  
-FROM [@EXD_COSTOS] T9                                    
-WHERE                              
- --T9.U_EXD_FECCON>=@FINICIO and         
- --t9.U_EXD_FECCON<=@FFIN                    
- (SELECT CASE                               
-      WHEN @FFIN > (SELECT CONVERT(VARCHAR(12),MAX(ISNULL(U_EXD_FECCON,0)),112) FROM [@EXD_COSTOS]) THEN @FFIN                            
-      ELSE T9.U_EXD_FECCON  END)   <=@FFIN         --@FINICIO --'20170801'                                                          
- ORDER BY 4                           
-             
-SELECT cultivo,
-       Campania,
-       elementoCosto,
-       isnull(codigoCC, '') codigoCC,
-       sum(isnull(Saldo, 0)) Saldo
-FROM TABLE_0
-WHERE cultivo NOT IN ('NO ASIGNADO',
-                      'PROYECTO')
-  AND ISNULL(Campania, '') !=''
-GROUP BY cultivo,
-         Campania,
-         elementoCosto,
-         codigoCC
-HAVING sum(isnull(Saldo, 0))<>0
-ORDER BY cultivo,
-         Campania,
-         elementoCosto,
-         codigoCC
-		                      
+ ),T1.OcrCode3                                              
+ )),'NO ASIGNADO')                                                        
+) [Cultivo],                                                      
+(ISNULL((SELECT T10.OcrCode3 FROM OWOR T10 WHERE cast(T10.DocNum as nvarchar(16)) IN                                                                          
+  (CASE T0.TransType                                                                          
+   WHEN '59' THEN (SELECT ISNULL(max(ISNULL(T5.BaseRef,0)),'00') FROM OIGN T4 INNER JOIN IGN1 T5 ON T5.DocEntry=T4.DocEntry WHERE T4.TransId=T0.TransId)                                                                          
+   WHEN '60' THEN (SELECT ISNULL(max(ISNULL(T5.BaseRef,0)),'00') FROM OIGE T4 INNER JOIN IGE1 T5 ON T5.DocEntry=T4.DocEntry WHERE T4.TransId=T0.TransId)                                                                             
+ WHEN '202' THEN T0.BaseRef                                                                    
+   WHEN '162' THEN T0.Ref2                                              
+  END                                                                          
+)),T1.OcrCode3)) [Codigo Centro de Costo],                                                                          
+(SELECT T99.PrcName FROM OPRC T99 WHERE T99.PrcCode=(ISNULL((SELECT T10.OcrCode3 FROM OWOR T10 WHERE cast(T10.DocNum as nvarchar(16)) IN                                                                          
+  (CASE T0.TransType                                                                          
+   WHEN '59' THEN (SELECT ISNULL(max(ISNULL(T5.BaseRef,0)),'00') FROM OIGN T4 INNER JOIN IGN1 T5 ON T5.DocEntry=T4.DocEntry WHERE T4.TransId=T0.TransId)                                                                          
+   WHEN '60' THEN (SELECT ISNULL(max(ISNULL(T5.BaseRef,0)),'00') FROM OIGE T4 INNER JOIN IGE1 T5 ON T5.DocEntry=T4.DocEntry WHERE T4.TransId=T0.TransId)                                                                             
+   WHEN '202' THEN T0.BaseRef                              
+   WHEN '162' THEN T0.Ref2                                              
+  END                                                                     
+)),T1.OcrCode3))) [Nombre Centro de Costo],                                  
+                                  
+ISNULL((CASE T0.TransType                                                                   
+ WHEN '30' 
+ THEN                                                                 
+ ISNULL(
+  (
+ 
+CASE 
+    WHEN T0.StornoToTr IS NULL THEN (
+        SELECT TOP 1 ISNULL(T9.U_EXD_CAMPANIA, 'NO ASIGNADO') AS U_EXD_CAMPANIA
+        FROM OPRJ T9 
+        WHERE T1.RefDate BETWEEN T9.ValidFrom AND T9.ValidTo
+        AND T9.U_EXD_CODART =T3.U_EXD_Linea
+    )
+    ELSE (
+        SELECT TOP 1 ISNULL(T9.U_EXD_CAMPANIA, 'NO ASIGNADO') AS U_EXD_CAMPANIA
+        FROM OPRJ T9 
+        WHERE (SELECT top 1 O2.RefDate FROM JDT1 O2  WHERE O2.TransId=T0.StornoToTr AND O2.Line_ID=T1.Line_ID) BETWEEN T9.ValidFrom AND T9.ValidTo
+        AND T9.U_EXD_CODART = T3.U_EXD_Linea
+    ) END
+    )
+ --(SELECT TOP 1 ISNULL(T9.U_EXD_CAMPANIA,'NO ASIGNADO') FROM OPRJ T9 WHERE T1.RefDate BETWEEN T9.ValidFrom AND T9.ValidTo                                                                 
+ --AND T9.U_EXD_CODART=T3.U_EXD_Linea)
+ 
+ ,(SELECT TOP 1 T67.U_EXD_CAMPAN FROM OWOR T67 WHERE T67.DocNum=T0.Ref1))                        
+ ELSE                          
+  (ISNULL((SELECT TOP 1 T10.U_EXD_CAMPAN FROM OWOR T10 WHERE cast(T10.DocNum as nvarchar(16)) IN                                                                          
+    (CASE T0.TransType                                                
+     WHEN '59' THEN (SELECT ISNULL(max(ISNULL(T5.BaseRef,0)),'00') FROM OIGN T4 INNER JOIN IGN1 T5 ON T5.DocEntry=T4.DocEntry WHERE T4.TransId=T0.TransId)                                      
+     WHEN '60' THEN (SELECT ISNULL(max(ISNULL(T5.BaseRef,0)),'00') FROM OIGE T4 INNER JOIN IGE1 T5 ON T5.DocEntry=T4.DocEntry WHERE T4.TransId=T0.TransId)                      
+     WHEN '202' THEN T0.BaseRef                  
+     WHEN '162' THEN T0.Ref2                                       
+     ELSE '00'                                                                          
+    END))                                                                
+  ,ISNULL((SELECT TOP 1 ISNULL(T9.U_EXD_CAMPANIA,'NO ASIGNADO') FROM OPRJ T9 WHERE T1.RefDate BETWEEN T9.ValidFrom AND T9.ValidTo                                                
+    AND T9.U_EXD_CODART=T3.U_EXD_Linea),'NO ASIGNADO')))                          
+END),'') [Campaña],                                                                          
+(t1.Debit-t1.Credit)*ISNULL((t4.PrcAmount/t4.OcrTotal),1) [Saldo],                                                                              
+'Ejecutado' [Tipo] ,                                    
+-- AGREGADO POR ACM                                    
+'SAP LINEA' [DATA]                                                       
+FROM OJDT T0                                                                          
+INNER JOIN JDT1 T1 ON T1.TransId=T0.TransId                                       
+INNER JOIN OACT T2 ON T2.AcctCode=T1.Account                                   
+LEFT JOIN [dbo].[OOCR] T3 ON T3.OcrCode = T1.OcrCode3                                  
+LEFT JOIN [dbo].[OCR1] T4 ON T4.OcrCode = T3.OcrCode                                  
+LEFT JOIN [dbo].[OPRC] T5 ON T5.PrcCode = T4.PrcCode                                                   
+WHERE LEFT(T2.Segment_0,1) IN ('7')                                                     
+AND T2.AcctCode IN (                                                                          
+     SELECT                                                                           
+     t10.AcctCode                                                                          
+     FROM OFRC T9                                                                           
+     INNER JOIN FRC1 T10 ON T10.TemplateId=T9.TemplateId                                                                          
+     WHERE T9.Name LIKE '%Ejecutado%'                                                                          
+     )                                                                          
+AND (t1.Debit-t1.Credit)<>0                                            
+AND T0.RefDate>= @FINICIO     
+AND T0.RefDate<= @FFIN                                                                                                                    
+AND T0.TransType NOT IN (-3,-2)                                               
                                  
-                                                   
-END 
-
-
-
+                                      
+UNION                                      
+                                      
+SELECT                      
+'0' Seleccionar,                                   
+T9.U_EXD_Asiento,                                      
+T9.U_EXD_NroLinea,                                      
+T9.U_EXD_FECCON,                                      
+T9.U_EXD_ELECOS,                                      
+T9.U_EXD_Cuenta,                                      
+T9.U_EXD_NOMCUE,                                      
+T9.U_EXD_CULTIVO,                                     
+T9.U_EXD_CODCC,                                      
+T9.U_EXD_NOMCC,                                      
+ISNULL(T9.U_EXD_CAMPANIA,''),                                      
+T9.U_EXD_SALDO,                                      
+T9.U_EXD_TIPO,                                    
+-- AGREGADO POR ACM                                    
+'TABLA COSTO'                                    
+FROM [@EXD_COSTOS] T9                                      
+WHERE                                
+ --T9.U_EXD_FECCON>=@FINICIO and           
+ --t9.U_EXD_FECCON<=@FFIN                      
+ (SELECT CASE                                 
+      WHEN @FFIN > (SELECT CONVERT(VARCHAR(12),MAX(ISNULL(U_EXD_FECCON,0)),112) FROM [@EXD_COSTOS]) THEN @FFIN                              
+      ELSE T9.U_EXD_FECCON  END)   <=@FFIN         --@FINICIO --'20170801'                                                            
+ ORDER BY 4                             
+               
+SELECT cultivo,  
+       Campania,  
+       elementoCosto,  
+       isnull(codigoCC, '') codigoCC,  
+       sum(isnull(Saldo, 0)) Saldo  
+FROM TABLE_0  
+WHERE cultivo NOT IN ('NO ASIGNADO',  
+                      'PROYECTO')  
+  AND ISNULL(Campania, '') !=''  
+GROUP BY cultivo,  
+         Campania,  
+         elementoCosto,  
+         codigoCC  
+HAVING sum(isnull(Saldo, 0))<>0  
+ORDER BY cultivo,  
+         Campania,  
+         elementoCosto,  
+         codigoCC  
+                          
+                                   
+                                                     
+END   
+  
+  
+  
